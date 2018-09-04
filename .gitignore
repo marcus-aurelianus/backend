@@ -120,6 +120,7 @@ Icon
 
 # Thumbnails
 ._*
+.idea/
 
 # User-specific stuff
 .idea/**/workspace.xml
