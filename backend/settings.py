@@ -27,6 +27,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+AUTH_USER_MODEL = 'apis.User'
+
 
 # Application definition
 
@@ -75,10 +77,14 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
+  'default': {
+    'ENGINE': 'django.db.backends.mysql',
+    'NAME': 'backend',
+    'USER': 'root',
+    'PASSWORD': 'root',
+    'HOST': '127.0.0.1', # Or an IP Address that your DB is hosted on
+    'PORT': '3306',
+  }
 }
 
 
