@@ -1,5 +1,3 @@
-import json
-
 login_schema = {
     "type": "object",
     "properties": {
