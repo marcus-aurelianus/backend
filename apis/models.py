@@ -3,11 +3,11 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
-from apis.constants import EVENT_OPEN, QUOTA_UNLIMITED, EVENT_TYPE_DEFAULT, FACEBOOK_USER
+from apis.constants import EVENT_OPEN, QUOTA_UNLIMITED, EVENT_TYPE_DEFAULT, DEFAULT_USER
 
 
 class User(AbstractUser):
-    third_party_connection = models.IntegerField(FACEBOOK_USER)
+    third_party_connection = models.IntegerField(default=DEFAULT_USER)
 
 
 class EventTab(models.Model):
