@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 
 from django.db import models
 from django.contrib.auth.models import AbstractUser
@@ -15,7 +16,7 @@ class EventTab(models.Model):
     event_organizer = models.CharField(max_length=48)
     event_title = models.CharField(max_length=48)
     event_desc = models.CharField(max_length=1024)
-    event_creator = models.UUIDField()
+    event_creator = models.IntegerField(db_index=True, null=False)
     event_type = models.IntegerField(default=EVENT_TYPE_DEFAULT)
     create_time = models.DateTimeField(auto_now_add=True)
     update_time = models.DateTimeField(auto_now=True)
@@ -23,6 +24,7 @@ class EventTab(models.Model):
     max_quota = models.IntegerField(default=QUOTA_UNLIMITED)
     num_participants = models.IntegerField(default=0)
     extra_info_dict = models.CharField(max_length=1024)
+    event_date = models.DateTimeField(null=False)
 
     class Meta:
         db_table = 'event_tab'

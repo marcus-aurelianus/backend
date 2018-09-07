@@ -1,3 +1,5 @@
+import json
+
 from django.http import JsonResponse
 from jsonschema import Draft4Validator
 
@@ -11,12 +13,12 @@ def validate_data(data_schema):
         def wrap(request, *args, **kwargs):
             data_validator = Draft4Validator(data_schema)
             if request.method == 'GET':
-                data = request.GET
+                data = request.GET.dict()
             elif request.method == 'POST':
-                data = request.POST
+                # json data
+                data = json.loads(request.body)
             else:
                 return JsonResponse(error_response_incorrect_format)
-            data = data.dict()
             if data_validator.is_valid(data):
                 request.data = data
                 return func(request, *args, **kwargs)
