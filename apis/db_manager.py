@@ -7,7 +7,7 @@ from django.utils.timezone import make_aware
 
 from apis.constants.error_code import ERROR_EVENT_NON_EXIST, ERROR_PARTICIPATE_NON_EXIST
 from apis.constants.util_constants import EVENT_TYPE_OPTIONS, STATUS_QUOTA_FULL, STATUS_ENDED, PARTICIPATE, UNPARTICIPATE, \
-    STATUS_OPEN, STATUS_CLOSED, STATUS_OPEN
+    STATUS_CLOSED, STATUS_OPEN
 from apis.models import User, EventTab, ParticipateTab
 from apis.utils import get_response_dict
 
@@ -118,37 +118,45 @@ def get_filtered_events(filter_options):
 @transaction.atomic
 def build_participate(user, eid, op_type):
     event = EventTab.objects.select_for_update().filter(id=eid)
+    participate = ParticipateTab.objects.filter(eid=eid, pid=user.pk)
     if event:
         if op_type == PARTICIPATE:
-            participate = ParticipateTab.objects.filter(eid=eid, pid=user.pk)
-            if participate and participate.state == STATUS_CLOSED:
-                participate.state = STATUS_OPEN
-                participate.save()
-            elif not participate:
-                event = event.first()
-                if event.num_participants < event.max_quota:
+            event = event.first()
+            if (participate and participate.state == STATUS_CLOSED) or not participate:
+                if event.state == STATUS_OPEN and event.num_participants < event.max_quota:
                     event.num_participants = event.num_participants + 1
                     if event.num_participants == event.max_quota:
                         event.state = STATUS_QUOTA_FULL
                     event.save()
-                    participate = ParticipateTab(eid=eid, pid=user.pk, state=STATUS_OPEN)
-                    participate.save()
-                    return True, participate
+
+                    if participate:
+                        participate.state = STATUS_OPEN
+                        participate.save()
+                    else:
+                        participate = ParticipateTab(eid=eid, pid=user.pk, state=STATUS_OPEN)
+                        participate.save()
                 else:
-                    return False, get_response_dict("event max quota exceed")
+                    return False, get_response_dict("event quota full")
+            else:
+                # already has participate record of status open, don't care.
+                return True, participate
         elif op_type == UNPARTICIPATE:
             event = event.first()
-            if event.num_participants == event.max_quota:
-                event.state = STATUS_OPEN
-            event.num_participants = event.num_participants - 1
-            event.save()
-            participate = ParticipateTab.objects.filter(eid=eid, pid=user.pk)
-            if participate:
+            if participate and participate.state == STATUS_OPEN:
+                if event.num_participants == event.max_quota:
+                    event.state = STATUS_OPEN
+                event.num_participants = event.num_participants - 1
+                event.save()
+
                 participate.state = STATUS_CLOSED
                 participate.save()
-            else:
+                return True, participate
+            elif not participate:
                 return False, get_response_dict("You did not participate in this event",
                                                 error_code=ERROR_PARTICIPATE_NON_EXIST)
+            else:
+                # already has participate record of status closed, don't care.
+                return True, participate
         else:
             return False, get_response_dict("unknown op type")
     else:
