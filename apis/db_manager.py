@@ -119,6 +119,8 @@ def get_filtered_events(filter_options):
 def build_participate(user, eid, op_type):
     event = EventTab.objects.select_for_update().filter(id=eid)
     participate = ParticipateTab.objects.filter(eid=eid, pid=user.pk)
+    if participate:
+        participate = participate.first()
     if event:
         if op_type == PARTICIPATE:
             event = event.first()
@@ -135,6 +137,7 @@ def build_participate(user, eid, op_type):
                     else:
                         participate = ParticipateTab(eid=eid, pid=user.pk, state=STATUS_OPEN)
                         participate.save()
+                    return True, participate
                 else:
                     return False, get_response_dict("event quota full")
             else:

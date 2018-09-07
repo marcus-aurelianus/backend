@@ -40,7 +40,8 @@ def json_response(func):
     def wrap(request, *args, **kwargs):
         try:
             response_data = func(request, *args, **kwargs)
-        except:
+        except Exception as e:
+            print(e)
             return JsonResponse(error_response_unexpected_error)
         return JsonResponse(response_data)
 
