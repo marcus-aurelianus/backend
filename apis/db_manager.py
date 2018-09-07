@@ -6,8 +6,8 @@ from django.db import transaction
 from django.utils.timezone import make_aware
 
 from apis.constants.error_code import ERROR_EVENT_NON_EXIST, ERROR_PARTICIPATE_NON_EXIST
-from apis.constants.util_constants import EVENT_TYPE_OPTIONS, EVENT_QUOTA_FULL, EVENT_ENDED, PARTICIPATE, UNPARTICIPATE, \
-    EVENT_OPEN, STATUS_CLOSED, STATUS_OPEN
+from apis.constants.util_constants import EVENT_TYPE_OPTIONS, STATUS_QUOTA_FULL, STATUS_ENDED, PARTICIPATE, UNPARTICIPATE, \
+    STATUS_OPEN, STATUS_CLOSED, STATUS_OPEN
 from apis.models import User, EventTab, ParticipateTab
 from apis.utils import get_response_dict
 
@@ -64,7 +64,7 @@ def get_filtered_events(filter_options):
     date_begin = filter_options.get('date_begin', '')
     date_end = filter_options.get('date_end', '')
 
-    events = EventTab.objects.exclude(state=EVENT_ENDED)
+    events = EventTab.objects.exclude(state=STATUS_ENDED)
     # If only specify date_begin, will get all events starts after the specified date so far
     if date_begin and not date_end:
         try:
@@ -129,7 +129,7 @@ def build_participate(user, eid, op_type):
                 if event.num_participants < event.max_quota:
                     event.num_participants = event.num_participants + 1
                     if event.num_participants == event.max_quota:
-                        event.state = EVENT_QUOTA_FULL
+                        event.state = STATUS_QUOTA_FULL
                     event.save()
                     participate = ParticipateTab(eid=eid, pid=user.pk, state=STATUS_OPEN)
                     participate.save()
@@ -139,7 +139,7 @@ def build_participate(user, eid, op_type):
         elif op_type == UNPARTICIPATE:
             event = event.first()
             if event.num_participants == event.max_quota:
-                event.state = EVENT_OPEN
+                event.state = STATUS_OPEN
             event.num_participants = event.num_participants - 1
             event.save()
             participate = ParticipateTab.objects.filter(eid=eid, pid=user.pk)

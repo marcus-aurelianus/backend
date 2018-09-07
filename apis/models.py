@@ -3,7 +3,7 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
-from apis.constants.util_constants import EVENT_OPEN, QUOTA_UNLIMITED, EVENT_TYPE_DEFAULT, DEFAULT_USER, STATUS_OPEN
+from apis.constants.util_constants import QUOTA_UNLIMITED, EVENT_TYPE_DEFAULT, DEFAULT_USER, STATUS_OPEN
 
 
 class User(AbstractUser):
@@ -19,7 +19,7 @@ class EventTab(models.Model):
     event_type = models.IntegerField(default=EVENT_TYPE_DEFAULT)
     create_time = models.DateTimeField(auto_now_add=True)
     update_time = models.DateTimeField(auto_now=True)
-    state = models.IntegerField(default=EVENT_OPEN)
+    state = models.IntegerField(default=STATUS_OPEN)
     max_quota = models.IntegerField(default=QUOTA_UNLIMITED)
     num_participants = models.IntegerField(default=0)
     extra_info_dict = models.CharField(max_length=1024)

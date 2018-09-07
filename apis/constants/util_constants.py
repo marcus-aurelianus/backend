@@ -1,8 +1,8 @@
-# event status=========
-EVENT_OPEN = 1
-EVENT_CLOSED = 0
-EVENT_QUOTA_FULL = 2
-EVENT_ENDED = -1
+# status=========
+STATUS_OPEN = 1
+STATUS_CLOSED = 2
+STATUS_QUOTA_FULL = 2
+STATUS_ENDED = -1
 # =====================
 
 
@@ -23,9 +23,5 @@ FACEBOOK_USER = 1
 PARTICIPATE = 1
 UNPARTICIPATE = 2
 
-
-# relation status
-STATUS_OPEN = 1
-STATUS_CLOSED = 2
 
 # sort options
