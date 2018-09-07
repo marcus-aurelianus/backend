@@ -152,3 +152,12 @@ participate_schema = {
         }
     }
 }
+
+record_schema = {
+    "type": "object",
+    "properties": {
+        "eid": {
+            "type": "string"
+        },
+    }
+}

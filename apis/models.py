@@ -41,6 +41,17 @@ class ParticipateTab(models.Model):
         db_table = 'participate_tab'
 
 
+class ViewHistoryTab(models.Model):
+    eid = models.UUIDField(db_index=True)
+    pid = models.IntegerField(db_index=True)
+    create_time = models.DateTimeField(auto_now_add=True)
+    update_time = models.DateTimeField(auto_now=True)
+    count = models.IntegerField(default=1)
+
+    class Meta:
+        db_table = 'history_view_tab'
+
+
 class LikeTab(models.Model):
     eid = models.UUIDField(db_index=True)
     pid = models.IntegerField(db_index=True)

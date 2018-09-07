@@ -9,7 +9,7 @@ from apis.constants.error_code import ERROR_EVENT_NON_EXIST, ERROR_PARTICIPATE_N
 from apis.constants.util_constants import EVENT_TYPE_OPTIONS, STATUS_QUOTA_FULL, STATUS_ENDED, PARTICIPATE, \
     UNPARTICIPATE, \
     STATUS_CLOSED, STATUS_OPEN, SORT_KEYWORD
-from apis.models import User, EventTab, ParticipateTab
+from apis.models import User, EventTab, ParticipateTab, ViewHistoryTab
 from apis.utils import get_response_dict
 
 tz = pytz.timezone('Asia/Singapore')
@@ -125,7 +125,7 @@ def get_filtered_events(filter_options):
 @transaction.atomic
 def build_participate(user, eid, op_type):
     event = EventTab.objects.select_for_update().filter(id=eid)
-    participate = ParticipateTab.objects.filter(eid=eid, pid=user.pk)
+    participate = ParticipateTab.objects.select_for_update().filter(eid=eid, pid=user.pk)
     if participate:
         participate = participate.first()
     if event:
@@ -171,3 +171,32 @@ def build_participate(user, eid, op_type):
             return False, get_response_dict("unknown op type")
     else:
         return False, get_response_dict("event does not exist", error_code=ERROR_EVENT_NON_EXIST)
+
+
+@transaction.atomic
+def record_view_history(user, eid):
+    record = ViewHistoryTab.objects.select_for_update().filter(pid=user.pk, eid=eid)
+    if record:
+        record = record.first()
+        record.count = record.count + 1
+        record.save()
+    else:
+        record = ViewHistoryTab(pid=user.pk, eid=eid)
+        record.save()
+    return record.count
+
+
+def fetch_user_all_events(user):
+    events = EventTab.objects.filter(pid=user.pk)
+    events = serializers.serialize('json', events)
+    return events
+
+
+def fetch_user_all_participated_events(user):
+    participates = ParticipateTab.objects.filter(pid=user.pk)
+    event_ids = []
+    for participate in participates:
+        event_ids.append(participate.eid)
+    events = EventTab.obejcts.filter(eid__in=event_ids)
+    events = serializers.serialize('json', events)
+    return events

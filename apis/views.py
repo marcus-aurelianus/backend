@@ -3,10 +3,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from apis.constants.error_code import ERROR_INVALID_PASSWORD_USERNAME
-from apis.db_manager import check_user_info, create_new_event, get_filtered_events, build_participate
+from apis.db_manager import check_user_info, create_new_event, get_filtered_events, build_participate, \
+    record_view_history, fetch_user_all_events, fetch_user_all_participated_events
 from apis.models import User
 from apis.request_decorators import validate_data, json_response, ensure_user_status
-from apis.data_schema import login_schema, register_schema, event_schema, filter_schema, participate_schema
+from apis.data_schema import login_schema, register_schema, event_schema, filter_schema, participate_schema, \
+    record_schema
 
 
 # Remove csrf_exempt decorator when deployed for production.
@@ -53,6 +55,22 @@ def user_register(request):
         user = User.objects.create_user(**user_data)
         user.save()
         return {"status": 'success', "user_id": user.pk}
+
+
+@require_http_methods(["GET"])
+@ensure_user_status
+@json_response
+def user_events(request):
+    events = fetch_user_all_events(request.user)
+    return {"status": 'success', "events": events}
+
+
+@require_http_methods(["GET"])
+@ensure_user_status
+@json_response
+def user_participated_events(request):
+    events = fetch_user_all_participated_events(request.user)
+    return {"status": 'success', "events": events}
 
 
 @csrf_exempt
@@ -102,3 +120,15 @@ def participate_event(request):
         return {"status": 'success'}
     else:
         return {"status": 'failed', **data}
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@ensure_user_status
+@validate_data(record_schema)
+@json_response
+def record_history_views(request):
+    user = request.user
+    eid = request.data['eid']
+    count = record_view_history(user, eid)
+    return {"status": 'success', "count": count}
