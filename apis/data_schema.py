@@ -1,4 +1,4 @@
-from apis.constants.util_constants import EVENT_TYPE_OPTIONS, PARTICIPATE, UNPARTICIPATE
+from apis.constants.util_constants import EVENT_TYPE_OPTIONS, PARTICIPATE, UNPARTICIPATE, SORT_OPTIONS
 
 login_schema = {
     "type": "object",
@@ -122,11 +122,15 @@ filter_schema = {
 
         "sort_by": {
           "type": "string",
-          "enum": []
+          "enum": SORT_OPTIONS
         },
 
         "is_reverse_sort": {
             "type": "boolean",
+        },
+
+        "keywords": {
+            "type": "string"
         }
 
     },

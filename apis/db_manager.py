@@ -6,8 +6,9 @@ from django.db import transaction
 from django.utils.timezone import make_aware
 
 from apis.constants.error_code import ERROR_EVENT_NON_EXIST, ERROR_PARTICIPATE_NON_EXIST
-from apis.constants.util_constants import EVENT_TYPE_OPTIONS, STATUS_QUOTA_FULL, STATUS_ENDED, PARTICIPATE, UNPARTICIPATE, \
-    STATUS_CLOSED, STATUS_OPEN
+from apis.constants.util_constants import EVENT_TYPE_OPTIONS, STATUS_QUOTA_FULL, STATUS_ENDED, PARTICIPATE, \
+    UNPARTICIPATE, \
+    STATUS_CLOSED, STATUS_OPEN, SORT_KEYWORD
 from apis.models import User, EventTab, ParticipateTab
 from apis.utils import get_response_dict
 
@@ -86,18 +87,19 @@ def get_filtered_events(filter_options):
             event_end_date__lte=filter_end_time)
 
     # filter by event type
-    event_type = filter_options.get('event_type', '')
+    event_type = filter_options.get('event_type', None)
     if event_type:
         if int(event_type) not in EVENT_TYPE_OPTIONS:
             return False, get_response_dict("unknown event type")
         events = events.filter(event_type=event_type)
 
     # sorting
-    sort_by = filter_options.get("sort_by", '')
+    sort_by = filter_options.get("sort_by", None)
     if sort_by:
-        if filter_options.get('is_reverse_sort', ''):
-            sort_by = "-" + sort_by
-        events = events.order_by(sort_by)
+        sort_keyword = SORT_KEYWORD[sort_by]
+        if filter_options.get('is_reverse_sort', None):
+            sort_keyword = "-" + sort_keyword
+        events = events.order_by(sort_keyword)
 
     total_pages = 0
     if events.count() > 0:
