@@ -1,10 +1,9 @@
 import uuid
-from datetime import datetime
 
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
-from apis.constants import EVENT_OPEN, QUOTA_UNLIMITED, EVENT_TYPE_DEFAULT, DEFAULT_USER
+from apis.constants.util_constants import EVENT_OPEN, QUOTA_UNLIMITED, EVENT_TYPE_DEFAULT, DEFAULT_USER
 
 
 class User(AbstractUser):
@@ -24,7 +23,9 @@ class EventTab(models.Model):
     max_quota = models.IntegerField(default=QUOTA_UNLIMITED)
     num_participants = models.IntegerField(default=0)
     extra_info_dict = models.CharField(max_length=1024)
-    event_date = models.DateTimeField(null=False)
+    event_start_date = models.DateTimeField(null=False)
+    event_end_date = models.DateTimeField(null=False)
+    is_open_ended = models.IntegerField()
 
     class Meta:
         db_table = 'event_tab'

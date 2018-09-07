@@ -1,3 +1,5 @@
+from apis.constants.util_constants import EVENT_TYPE_OPTIONS
+
 login_schema = {
     "type": "object",
     "properties": {
@@ -15,7 +17,6 @@ login_schema = {
     },
     "required": ["username", "password"]
 }
-
 
 register_schema = {
     "type": "object",
@@ -40,6 +41,8 @@ register_schema = {
     "required": ["username", "password"]
 }
 
+# user could only specify event start date if the event is open-ended. In that case, specify event_end_date with
+# same value as event_start_date
 
 event_schema = {
     "type": "object",
@@ -56,7 +59,8 @@ event_schema = {
 
         "event_type": {
             "type": "integer",
-            "multipleOf": 1.0
+            "multipleOf": 1.0,
+            "enum": EVENT_TYPE_OPTIONS
         },
 
         "max_quota": {
@@ -68,12 +72,64 @@ event_schema = {
             "type": "object",
         },
 
-        "event_date": {
+        "event_start_date": {
             "type": "string",
             "minLength": 16,
             "maxLength": 16
+        },
+
+        "event_end_date": {
+            "type": "string",
+            "minLength": 16,
+            "maxLength": 16
+        },
+
+        "is_open_ended": {
+            "type": "boolean"
         }
     },
 
-    "required": ["event_title", "event_desc", "event_type", "max_quota", "event_date"]
+    "required": ["event_title", "event_desc", "event_type", "max_quota", "event_start_date",
+                 "is_open_ended"]
+}
+
+filter_schema = {
+    "type": "object",
+    "properties": {
+        "date_begin": {
+            "type": "string",
+            "minLength": 16,
+            "maxLength": 16
+        },
+
+        "date_end": {
+            "type": "string",
+            "minLength": 16,
+            "maxLength": 16
+        },
+
+        "event_type": {
+            "type": "string",
+        },
+
+        "page_limit": {
+            "type": "string",
+        },
+
+        "page_num": {
+            "type": "string",
+        },
+
+        "sort_by": {
+          "type": "string",
+          "enum": []
+        },
+
+        "is_reverse_sort": {
+            "type": "boolean",
+        }
+
+    },
+
+    "required": ["page_limit", "page_num"]
 }

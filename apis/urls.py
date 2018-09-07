@@ -7,4 +7,5 @@ urlpatterns = [
     url(r'v1/logout/', user_logout),
     url(r'v1/register/', user_register),
     url(r'v1/create_event/', post_event),
+    url(r'v1/events_list/', events_list),
 ]
