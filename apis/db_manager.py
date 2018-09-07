@@ -93,6 +93,11 @@ def get_filtered_events(filter_options):
             return False, get_response_dict("unknown event type")
         events = events.filter(event_type=event_type)
 
+    # keyword matching
+    keyword = filter_options.get('keyword', None)
+    if keyword:
+        events = events.filter(name__contains=keyword)
+
     # sorting
     sort_by = filter_options.get("sort_by", None)
     if sort_by:
