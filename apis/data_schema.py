@@ -133,3 +133,13 @@ filter_schema = {
 
     "required": ["page_limit", "page_num"]
 }
+
+
+participate_schema = {
+    "type": "object",
+    "properties": {
+        "eid": {
+            "type": "string"
+        }
+    }
+}

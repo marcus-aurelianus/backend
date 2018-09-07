@@ -4,8 +4,9 @@ import pytz
 from django.core import serializers
 from django.utils.timezone import make_aware
 
-from apis.constants.util_constants import EVENT_TYPE_OPTIONS
-from apis.models import User, EventTab
+from apis.constants.error_code import ERROR_EVENT_NON_EXIST
+from apis.constants.util_constants import EVENT_TYPE_OPTIONS, EVENT_QUOTA_FULL, EVENT_ENDED
+from apis.models import User, EventTab, ParticipateTab
 from apis.utils import get_response_dict
 
 tz = pytz.timezone('Asia/Singapore')
@@ -61,13 +62,14 @@ def get_filtered_events(filter_options):
     date_begin = filter_options.get('date_begin', '')
     date_end = filter_options.get('date_end', '')
 
+    events = EventTab.objects.exclude(state=EVENT_ENDED)
     # If only specify date_begin, will get all events starts after the specified date so far
     if date_begin and not date_end:
         try:
             filter_start_time = datetime.strptime(date_begin, '%Y-%m-%d %H:%M')
         except:
             return False, get_response_dict("invalid date format")
-        events = EventTab.objects.filter(event_start_date__gte=filter_start_time)
+        events = events.filter(event_start_date__gte=filter_start_time)
 
     elif not date_begin and date_end:
         return False, get_response_dict("unsupported filter option, please specify event start time")
@@ -78,10 +80,8 @@ def get_filtered_events(filter_options):
             filter_end_time = datetime.strptime(date_end, '%Y-%m-%d %H:%M')
         except:
             return False, get_response_dict("invalid date format")
-        events = EventTab.objects.filter(event_start_date__gte=filter_start_time).filter(
+        events = events.filter(event_start_date__gte=filter_start_time).filter(
             event_end_date__lte=filter_end_time)
-    else:
-        events = EventTab.objects.all()
 
     # filter by event type
     event_type = filter_options.get('event_type', '')
@@ -113,7 +113,22 @@ def get_filtered_events(filter_options):
     return True, {"events": serializers.serialize('json', events), "total_pages": total_pages}
 
 
-
+def build_participate(user, eid):
+    event = EventTab.objects.filter(id=eid)
+    if event:
+        event = event.first()
+        if event.num_participants < event.max_quota:
+            event.num_participants = event.num_participants + 1
+            if event.num_participants == event.max_quota:
+                event.state = EVENT_QUOTA_FULL
+            event.save()
+            participate = ParticipateTab(eid=eid, pid=user.pk)
+            participate.save()
+            return True, participate
+        else:
+            return False, get_response_dict("event max quota exceed")
+    else:
+        return False, get_response_dict("event does not exist", error_code=ERROR_EVENT_NON_EXIST)
 
 
 

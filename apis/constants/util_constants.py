@@ -1,7 +1,8 @@
 # event status=========
 EVENT_OPEN = 1
 EVENT_CLOSED = 0
-EVENT_SUSPENDED = -1
+EVENT_QUOTA_FULL = 2
+EVENT_ENDED = -1
 # =====================
 
 

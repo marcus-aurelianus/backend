@@ -33,7 +33,7 @@ class EventTab(models.Model):
 
 class ParticipateTab(models.Model):
     eid = models.UUIDField(db_index=True)
-    pid = models.UUIDField(db_index=True)
+    pid = models.IntegerField(db_index=True)
     create_time = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -42,7 +42,7 @@ class ParticipateTab(models.Model):
 
 class LikeTab(models.Model):
     eid = models.UUIDField(db_index=True)
-    pid = models.UUIDField(db_index=True)
+    pid = models.IntegerField(db_index=True)
     create_time = models.DateTimeField(auto_now_add=True)
 
     class Meta:

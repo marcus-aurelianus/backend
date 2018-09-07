@@ -3,10 +3,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from apis.constants.error_code import ERROR_INVALID_PASSWORD_USERNAME
-from apis.db_manager import check_user_info, create_new_event, get_filtered_events
+from apis.db_manager import check_user_info, create_new_event, get_filtered_events, build_participate
 from apis.models import User
 from apis.request_decorators import validate_data, json_response, ensure_user_status
-from apis.data_schema import login_schema, register_schema, event_schema, filter_schema
+from apis.data_schema import login_schema, register_schema, event_schema, filter_schema, participate_schema
 
 
 # Remove csrf_exempt decorator when deployed for production.
@@ -74,18 +74,32 @@ def post_event(request):
         return {"status": 'failed', **event}
 
 
-@csrf_exempt
 @require_http_methods(["GET"])
 @validate_data(filter_schema)
 @json_response
 def events_list(request):
     try:
         flag, data = get_filtered_events(request.data)
-    except Exception as e:
-        print(e)
+    except:
         return {"status": False, "desc": "oops, unexpected error"}
 
     if flag:
         return {"status": 'success', **data}
+    else:
+        return {"status": 'failed', **data}
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@ensure_user_status
+@validate_data(participate_schema)
+@json_response
+def participate_event(request):
+    user = request.user
+    eid = request.data['eid']
+    flag, data = build_participate(user, eid)
+
+    if flag:
+        return {"status": 'success'}
     else:
         return {"status": 'failed', **data}
