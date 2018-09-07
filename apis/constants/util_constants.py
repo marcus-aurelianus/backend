@@ -20,4 +20,12 @@ DEFAULT_USER = 0
 FACEBOOK_USER = 1
 # =====================
 
+PARTICIPATE = 1
+UNPARTICIPATE = 2
+
+
+# relation status
+STATUS_OPEN = 1
+STATUS_CLOSED = 2
+
 # sort options

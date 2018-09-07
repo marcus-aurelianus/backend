@@ -64,8 +64,7 @@ def post_event(request):
     event_data = request.data
     try:
         flag, event = create_new_event(event_data, request.user)
-    except Exception as e:
-        print(e)
+    except:
         return {"status": False, "desc": "oops, unexpected error"}
 
     if flag:
@@ -97,7 +96,7 @@ def events_list(request):
 def participate_event(request):
     user = request.user
     eid = request.data['eid']
-    flag, data = build_participate(user, eid)
+    flag, data = build_participate(user, eid, request.data['op_type'])
 
     if flag:
         return {"status": 'success'}

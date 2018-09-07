@@ -3,7 +3,7 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
-from apis.constants.util_constants import EVENT_OPEN, QUOTA_UNLIMITED, EVENT_TYPE_DEFAULT, DEFAULT_USER
+from apis.constants.util_constants import EVENT_OPEN, QUOTA_UNLIMITED, EVENT_TYPE_DEFAULT, DEFAULT_USER, STATUS_OPEN
 
 
 class User(AbstractUser):
@@ -35,6 +35,7 @@ class ParticipateTab(models.Model):
     eid = models.UUIDField(db_index=True)
     pid = models.IntegerField(db_index=True)
     create_time = models.DateTimeField(auto_now_add=True)
+    state = models.IntegerField(default=STATUS_OPEN)
 
     class Meta:
         db_table = 'participate_tab'
@@ -44,6 +45,7 @@ class LikeTab(models.Model):
     eid = models.UUIDField(db_index=True)
     pid = models.IntegerField(db_index=True)
     create_time = models.DateTimeField(auto_now_add=True)
+    state = models.IntegerField(default=STATUS_OPEN)
 
     class Meta:
         db_table = 'like_tab'

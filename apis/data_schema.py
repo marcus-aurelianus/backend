@@ -1,4 +1,4 @@
-from apis.constants.util_constants import EVENT_TYPE_OPTIONS
+from apis.constants.util_constants import EVENT_TYPE_OPTIONS, PARTICIPATE, UNPARTICIPATE
 
 login_schema = {
     "type": "object",
@@ -140,6 +140,11 @@ participate_schema = {
     "properties": {
         "eid": {
             "type": "string"
+        },
+
+        "op_type": {
+            "type": "integer",
+            "enum": [PARTICIPATE, UNPARTICIPATE]
         }
     }
 }

@@ -2,10 +2,12 @@ from datetime import datetime
 
 import pytz
 from django.core import serializers
+from django.db import transaction
 from django.utils.timezone import make_aware
 
-from apis.constants.error_code import ERROR_EVENT_NON_EXIST
-from apis.constants.util_constants import EVENT_TYPE_OPTIONS, EVENT_QUOTA_FULL, EVENT_ENDED
+from apis.constants.error_code import ERROR_EVENT_NON_EXIST, ERROR_PARTICIPATE_NON_EXIST
+from apis.constants.util_constants import EVENT_TYPE_OPTIONS, EVENT_QUOTA_FULL, EVENT_ENDED, PARTICIPATE, UNPARTICIPATE, \
+    EVENT_OPEN, STATUS_CLOSED, STATUS_OPEN
 from apis.models import User, EventTab, ParticipateTab
 from apis.utils import get_response_dict
 
@@ -113,25 +115,41 @@ def get_filtered_events(filter_options):
     return True, {"events": serializers.serialize('json', events), "total_pages": total_pages}
 
 
-def build_participate(user, eid):
-    event = EventTab.objects.filter(id=eid)
+@transaction.atomic
+def build_participate(user, eid, op_type):
+    event = EventTab.objects.select_for_update().filter(id=eid)
     if event:
-        event = event.first()
-        if event.num_participants < event.max_quota:
-            event.num_participants = event.num_participants + 1
+        if op_type == PARTICIPATE:
+            participate = ParticipateTab.objects.filter(eid=eid, pid=user.pk)
+            if participate and participate.state == STATUS_CLOSED:
+                participate.state = STATUS_OPEN
+                participate.save()
+            elif not participate:
+                event = event.first()
+                if event.num_participants < event.max_quota:
+                    event.num_participants = event.num_participants + 1
+                    if event.num_participants == event.max_quota:
+                        event.state = EVENT_QUOTA_FULL
+                    event.save()
+                    participate = ParticipateTab(eid=eid, pid=user.pk, state=STATUS_OPEN)
+                    participate.save()
+                    return True, participate
+                else:
+                    return False, get_response_dict("event max quota exceed")
+        elif op_type == UNPARTICIPATE:
+            event = event.first()
             if event.num_participants == event.max_quota:
-                event.state = EVENT_QUOTA_FULL
+                event.state = EVENT_OPEN
+            event.num_participants = event.num_participants - 1
             event.save()
-            participate = ParticipateTab(eid=eid, pid=user.pk)
-            participate.save()
-            return True, participate
+            participate = ParticipateTab.objects.filter(eid=eid, pid=user.pk)
+            if participate:
+                participate.state = STATUS_CLOSED
+                participate.save()
+            else:
+                return False, get_response_dict("You did not participate in this event",
+                                                error_code=ERROR_PARTICIPATE_NON_EXIST)
         else:
-            return False, get_response_dict("event max quota exceed")
+            return False, get_response_dict("unknown op type")
     else:
         return False, get_response_dict("event does not exist", error_code=ERROR_EVENT_NON_EXIST)
-
-
-
-
-
-
