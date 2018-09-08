@@ -126,7 +126,7 @@ Non-open-ended events does not specify event end time.
 ```
 
 
-## Notes
+##Notes
 
 * `error_code=107` can be resulted from various reasons, please properly check user input before submitting the data.
 
