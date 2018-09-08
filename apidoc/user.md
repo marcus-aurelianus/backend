@@ -1,6 +1,6 @@
 # User Related API documentation
 
-##Register
+## Register
 Register new account with email, username and password.
 
 **URL** : `/api/v1/user/register/`
@@ -41,7 +41,7 @@ For a User with username `test1234`, password `12345678`, and email `test1234@ab
 * `username` and `password` have to be a minimum length of 8 and maximum of 16 characters.
 
 
-##Login
+## Login
 Login with username and password.
 
 **URL** : `/api/v1/user/login/`
