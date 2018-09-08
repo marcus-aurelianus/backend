@@ -8,7 +8,7 @@ Backend server with django framework.
 
 ## API 
 
-#### The API is divided into three parts, `user`, `events` and `action`.
+#### The API is divided into two parts, `user` and `events`.
 
 * [user](apidoc/user.md) - All user related api documentation, including login, register etc.
 
