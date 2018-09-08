@@ -41,7 +41,8 @@ def json_response(func):
         status_code = 200
         try:
             response_data = func(request, *args, **kwargs)
-        except:
+        except Exception as e:
+            print(e)
             return JsonResponse(error_response_unexpected_error)
         if response_data.get('status') == 'failed':
             status_code = 400

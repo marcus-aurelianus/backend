@@ -118,7 +118,7 @@ def participate_event(request):
     flag, data = build_participate(user, eid, request.data['op_type'])
 
     if flag:
-        return {"status": 'success'}
+        return {"status": 'success', **data}
     else:
         return {"status": 'failed', **data}
 
@@ -132,4 +132,4 @@ def record_history_views(request):
     user = request.user
     eid = request.data['eid']
     count = record_view_history(user, eid)
-    return {"status": 'success', "count": count}
+    return {"status": 'success', "views_count": count}

@@ -5,8 +5,8 @@ from django.core import serializers
 from django.db import transaction
 from django.utils.timezone import make_aware
 
-from apis.constants.error_code import ERROR_EVENT_NON_EXIST, ERROR_PARTICIPATE_NON_EXIST, ERROR_DATE_INVALID, \
-    ERROR_UNKNOWN_EVENT_TYPE, ERROR_EVENT_UNAVAILABLE, ERROR_PAGE_EXCEEDED
+from apis.constants.error_code import ERROR_EVENT_NON_EXIST, ERROR_DATE_INVALID, \
+    ERROR_UNKNOWN_EVENT_TYPE, ERROR_EVENT_UNAVAILABLE, ERROR_PAGE_EXCEEDED, ERROR_UNKNOWN_OP_TYPE
 from apis.constants.util_constants import EVENT_TYPE_OPTIONS, STATUS_QUOTA_FULL, STATUS_ENDED, PARTICIPATE, \
     UNPARTICIPATE, \
     STATUS_CLOSED, STATUS_OPEN, SORT_KEYWORD
@@ -147,12 +147,14 @@ def build_participate(user, eid, op_type):
                     else:
                         participate = ParticipateTab(eid=eid, pid=user.pk, state=STATUS_OPEN)
                         participate.save()
-                    return True, participate
+                    return True, {"is_redundant": False, "quota_left": event.max_quota - event.num_participants,
+                                  "max_quota": event.max_quota}
                 else:
                     return False, get_error_response_dict("event quota full", error_code=ERROR_EVENT_UNAVAILABLE)
             else:
                 # already has participate record of status open, don't care.
-                return True, participate
+                return True, {"is_redundant": True, "quota_left": event.max_quota - event.num_participants,
+                              "max_quota": event.max_quota}
         elif op_type == UNPARTICIPATE:
             event = event.first()
             if participate and participate.state == STATUS_OPEN:
@@ -163,15 +165,16 @@ def build_participate(user, eid, op_type):
 
                 participate.state = STATUS_CLOSED
                 participate.save()
-                return True, participate
-            elif not participate:
-                return False, get_error_response_dict("You did not participate in this event",
-                                                      error_code=ERROR_PARTICIPATE_NON_EXIST)
+                return True, {"is_redundant": False, "quota_left": event.max_quota - event.num_participants,
+                              "max_quota": event.max_quota}
             else:
-                # already has participate record of status closed, don't care.
-                return True, participate
+                if not participate:
+                    participate = ParticipateTab(eid=eid, pid=user.pk, state=STATUS_CLOSED)
+                    participate.save()
+                return True, {"is_redundant": True, "quota_left": event.max_quota - event.num_participants,
+                              "max_quota": event.max_quota}
         else:
-            return False, get_error_response_dict("unknown op type")
+            return False, get_error_response_dict("unknown op type", error_code=ERROR_UNKNOWN_OP_TYPE)
     else:
         return False, get_error_response_dict("event does not exist", error_code=ERROR_EVENT_NON_EXIST)
 
@@ -200,6 +203,6 @@ def fetch_user_all_participated_events(user):
     event_ids = []
     for participate in participates:
         event_ids.append(participate.eid)
-    events = EventTab.obejcts.filter(eid__in=event_ids)
+    events = EventTab.objects.filter(id__in=event_ids)
     events = serializers.serialize('json', events)
     return events
