@@ -207,8 +207,8 @@ def record_view_history(user, eid):
     return record.count
 
 
-def fetch_user_all_events(user):
-    events = EventTab.objects.filter(pid=user.pk)
+def fetch_user_all_created_events(user):
+    events = EventTab.objects.filter(event_creator=user.pk)
     events = serializers.serialize('json', events)
     return events
 

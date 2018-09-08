@@ -59,6 +59,7 @@ def ensure_user_status(func):
     def wrap(request, *args, **kwargs):
         if request.user.is_authenticated():
             if request.user.state == USER_ACTIVE:
+
                 return func(request, *args, **kwargs)
         return JsonResponse(error_response_login_required, status=401)
 

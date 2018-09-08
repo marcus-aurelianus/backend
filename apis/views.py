@@ -1,21 +1,28 @@
 from django.contrib.auth import authenticate, login, logout
+from django.core.cache import cache
+from django.core.cache.backends.base import DEFAULT_TIMEOUT
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from apis.authy import authy_create_user, send_sms, verify_token
 from apis.constants.error_code import ERROR_INVALID_PASSWORD_USERNAME, ERROR_SERVICE_UNAVAILABLE, \
-    ERROR_USER_ALREADY_EXIST, ERROR_UID_NON_EXIST, ERROR_VERIFICATION_FAILED
+    ERROR_USER_ALREADY_EXIST, ERROR_UID_NON_EXIST, ERROR_VERIFICATION_FAILED, ERROR_INACTIVATE_ACCOUNT
 from apis.constants.util_constants import USER_INACTIVE, USER_ACTIVE
 from apis.db_manager import check_user_info, create_new_event, get_filtered_events, build_participate, \
-    record_view_history, fetch_user_all_events, fetch_user_all_participated_events, fetch_all_participators, get_user
+    record_view_history, fetch_user_all_created_events, fetch_user_all_participated_events, fetch_all_participators, get_user
 from apis.models import User
 from apis.request_decorators import validate_data, json_response, ensure_user_status
 from apis.data_schema import login_schema, register_schema, event_schema, filter_schema, participate_schema, \
     record_schema, event_participators_schema, token_schema
 
+from apis.utils import get_error_response_dict
 
 # Remove csrf_exempt decorator when deployed for production.
-from apis.utils import get_error_response_dict
+from backend import settings
+
+CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
+USER_CREATED_EVENTS_PREFIX = "user_created_events_"
+USER_PARTICIPATED_EVENTS_PREFIX = "user_participated_events_"
 
 
 @csrf_exempt
@@ -25,14 +32,17 @@ def user_login(request):
     user_data = request.data
     user = authenticate(username=user_data['username'], password=user_data['password'])
     if user is not None:
-        login(request, user)
-        response_data = {
-            "status": 'success',
-            "username": user.username,
-            "email": user.email,
-            "uid": user.pk
-        }
-        return response_data
+        if user.state == USER_ACTIVE:
+            login(request, user)
+            response_data = {
+                "status": 'success',
+                "username": user.username,
+                "email": user.email,
+                "uid": user.pk
+            }
+            return response_data
+        else:
+            return get_error_response_dict('user account inactivate', error_code=ERROR_INACTIVATE_ACCOUNT)
     else:
         return get_error_response_dict('user name or password incorrect', error_code=ERROR_INVALID_PASSWORD_USERNAME)
 
@@ -97,16 +107,28 @@ def user_register_complete(request):
 @ensure_user_status
 @json_response
 def user_events(request):
-    events = fetch_user_all_events(request.user)
-    return {"status": 'success', "events": events}
+    cache_result = cache.get(USER_CREATED_EVENTS_PREFIX+str(request.user.pk))
+    if cache_result:
+        return cache_result
+    else:
+        events = fetch_user_all_created_events(request.user)
+        response = {"status": 'success', "events": events}
+        cache.set(USER_CREATED_EVENTS_PREFIX+str(request.user.pk), response, CACHE_TTL)
+        return response
 
 
 @require_http_methods(["GET"])
 @ensure_user_status
 @json_response
 def user_participated_events(request):
-    events = fetch_user_all_participated_events(request.user)
-    return {"status": 'success', "events": events}
+    cache_result = cache.get(USER_PARTICIPATED_EVENTS_PREFIX+str(request.user.pk))
+    if cache_result:
+        return cache_result
+    else:
+        events = fetch_user_all_participated_events(request.user)
+        response = {"status": 'success', "events": events}
+        cache.set(USER_PARTICIPATED_EVENTS_PREFIX+str(request.user.pk), response, CACHE_TTL)
+        return response
 
 
 @csrf_exempt
