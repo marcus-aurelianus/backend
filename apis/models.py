@@ -7,6 +7,7 @@ from apis.constants.util_constants import QUOTA_UNLIMITED, EVENT_TYPE_DEFAULT, D
 
 
 class User(AbstractUser):
+    events_created_daily = models.IntegerField(default=0)
     third_party_connection = models.IntegerField(default=DEFAULT_USER)
 
 

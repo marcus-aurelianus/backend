@@ -87,7 +87,7 @@ def post_event(request):
         return {"status": False, "desc": "oops, unexpected error"}
 
     if flag:
-        return {"status": 'success', "event_id": event.id}
+        return {"status": 'success', "event_id": event.id, "events_created_today": request.user.events_created_daily}
     else:
         return {"status": 'failed', **event}
 

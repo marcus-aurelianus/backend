@@ -70,6 +70,7 @@
 * Event type code:
     * Default: `0`
     * Facebook event: `1`
+* Each user can only create up to 20 events per day.
 
 
 ### Success Response
@@ -96,7 +97,8 @@ An authenticated user posting an new event.
 ```json
 {
     "status": "success",
-    "event_id": "1dbbe52b-d65a-4bf8-8ee3-f296fd7aa8d1"
+    "event_id": "1dbbe52b-d65a-4bf8-8ee3-f296fd7aa8d1",
+    "events_created_today": 4
 }
 ```
 ### Error Response
@@ -125,6 +127,14 @@ Non-open-ended events does not specify event end time.
 }
 ```
 
+Maximum daily events creation limit exceeded.
+```json
+{ 
+    "status": "failed", 
+    "desc": "maximum daily limit exceeded",
+    "error_code": 106
+}
+```
 
 ## Notes
 

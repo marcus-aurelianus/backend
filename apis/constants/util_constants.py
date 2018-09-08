@@ -32,3 +32,5 @@ CURRENT_PARTICIPANTS = 3
 
 SORT_OPTIONS = [BEGIN_DATE, END_DATE, MAX_QUOTA, CURRENT_PARTICIPANTS]
 SORT_KEYWORD = ['event_start_date', 'event_end_date', 'max_quota', 'num_participants']
+
+EVENT_DAILY_LIMIT = 20

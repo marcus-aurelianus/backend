@@ -6,10 +6,11 @@ from django.db import transaction
 from django.utils.timezone import make_aware
 
 from apis.constants.error_code import ERROR_EVENT_NON_EXIST, ERROR_DATE_INVALID, \
-    ERROR_UNKNOWN_EVENT_TYPE, ERROR_EVENT_UNAVAILABLE, ERROR_PAGE_EXCEEDED, ERROR_UNKNOWN_OP_TYPE
+    ERROR_UNKNOWN_EVENT_TYPE, ERROR_EVENT_UNAVAILABLE, ERROR_PAGE_EXCEEDED, ERROR_UNKNOWN_OP_TYPE, \
+    ERROR_DAILY_EVENT_LIMITS_EXCEEDED
 from apis.constants.util_constants import EVENT_TYPE_OPTIONS, STATUS_QUOTA_FULL, STATUS_ENDED, PARTICIPATE, \
     UNPARTICIPATE, \
-    STATUS_CLOSED, STATUS_OPEN, SORT_KEYWORD
+    STATUS_CLOSED, STATUS_OPEN, SORT_KEYWORD, EVENT_DAILY_LIMIT
 from apis.models import User, EventTab, ParticipateTab, ViewHistoryTab
 from apis.utils import get_error_response_dict
 
@@ -26,6 +27,10 @@ def check_user_info(user_data):
 
 
 def create_new_event(event_data, user):
+    if user.events_created_daily >= EVENT_DAILY_LIMIT:
+        return False, get_error_response_dict("maximum daily limit exceeded",
+                                              error_code=ERROR_DAILY_EVENT_LIMITS_EXCEEDED)
+
     is_open_ended = event_data.get('is_open_ended', '')
     event_start_date_str = event_data.get('event_start_date', '')
     if not event_start_date_str:
@@ -59,6 +64,8 @@ def create_new_event(event_data, user):
     event = EventTab(**event_data)
     event.event_creator = user.pk
     event.save()
+    user.events_created_daily = user.events_created_daily + 1
+    user.save()
     return True, event
 
 
