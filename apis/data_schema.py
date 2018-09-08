@@ -36,10 +36,30 @@ register_schema = {
         "email": {
             "type": "string",
             "format": "email"
+        },
+
+        "phone_number": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 8
         }
     },
-    "required": ["username", "password"]
+    "required": ["username", "password", "email", "phone_number"]
 }
+
+token_schema = {
+    "type": "object",
+    "properties": {
+        "user_token": {
+            "type": "string"
+        },
+
+        "uid": {
+            "type": "string"
+        }
+    }
+}
+
 
 # user could only specify event start date if the event is open-ended. In that case, specify event_end_date with
 # same value as event_start_date
@@ -154,6 +174,15 @@ participate_schema = {
 }
 
 record_schema = {
+    "type": "object",
+    "properties": {
+        "eid": {
+            "type": "string"
+        },
+    }
+}
+
+event_participators_schema = {
     "type": "object",
     "properties": {
         "eid": {

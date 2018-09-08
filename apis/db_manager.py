@@ -7,7 +7,7 @@ from django.utils.timezone import make_aware
 
 from apis.constants.error_code import ERROR_EVENT_NON_EXIST, ERROR_DATE_INVALID, \
     ERROR_UNKNOWN_EVENT_TYPE, ERROR_EVENT_UNAVAILABLE, ERROR_PAGE_EXCEEDED, ERROR_UNKNOWN_OP_TYPE, \
-    ERROR_DAILY_EVENT_LIMITS_EXCEEDED
+    ERROR_DAILY_EVENT_LIMITS_EXCEEDED, ERROR_UNAUTHORIZED_OPERATION
 from apis.constants.util_constants import EVENT_TYPE_OPTIONS, STATUS_QUOTA_FULL, STATUS_ENDED, PARTICIPATE, \
     UNPARTICIPATE, \
     STATUS_CLOSED, STATUS_OPEN, SORT_KEYWORD, EVENT_DAILY_LIMIT
@@ -15,6 +15,14 @@ from apis.models import User, EventTab, ParticipateTab, ViewHistoryTab
 from apis.utils import get_error_response_dict
 
 tz = pytz.timezone('Asia/Singapore')
+
+
+def get_user(uid):
+    user = User.objects.filter(pk=uid)
+    if user:
+        return user.first()
+    else:
+        return None
 
 
 def check_user_info(user_data):
@@ -213,3 +221,19 @@ def fetch_user_all_participated_events(user):
     events = EventTab.objects.filter(id__in=event_ids)
     events = serializers.serialize('json', events)
     return events
+
+
+def fetch_all_participators(eid, user):
+    # only event owner can see the list of participators.
+    event = EventTab.objects.filter(id=eid)
+    if event:
+        event = event.first()
+        if event.event_creator != user.pk:
+            return False, get_error_response_dict("unauthorized operation", error_code=ERROR_UNAUTHORIZED_OPERATION)
+        participates = list(ParticipateTab.objects.filter(eid=eid).values_list('pid', flat=True))
+        users = User.objects.filter(pk__in=participates)
+        return True, {"participators": serializers.serialize('json', users, fields=('pk', 'username', 'email'))}
+    else:
+        return False, get_error_response_dict("event does not exist", error_code=ERROR_EVENT_NON_EXIST)
+
+

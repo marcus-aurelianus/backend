@@ -3,12 +3,15 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
-from apis.constants.util_constants import QUOTA_UNLIMITED, EVENT_TYPE_DEFAULT, DEFAULT_USER, STATUS_OPEN
+from apis.constants.util_constants import QUOTA_UNLIMITED, EVENT_TYPE_DEFAULT, DEFAULT_USER, STATUS_OPEN, USER_INACTIVE
 
 
 class User(AbstractUser):
     events_created_daily = models.IntegerField(default=0)
     third_party_connection = models.IntegerField(default=DEFAULT_USER)
+    phone_number = models.CharField(max_length=24)
+    authy_id = models.CharField(max_length=24)
+    state = models.IntegerField(default=USER_INACTIVE)
 
 
 class EventTab(models.Model):

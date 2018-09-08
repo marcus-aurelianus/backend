@@ -4,11 +4,13 @@ from django.http import JsonResponse
 from jsonschema import Draft4Validator
 
 from apis.constants.error_code import ERROR_LOGIN_REQUIRED, ERROR_INVALID_DATA_FORMAT, ERROR_UNEXPECTED
+from apis.constants.util_constants import USER_ACTIVE
 
 error_response_incorrect_format = {"status": 'failed', "desc": "incorrect data format",
                                    "error_code": ERROR_INVALID_DATA_FORMAT}
 error_response_unexpected_error = {"status": 'failed', "desc": "oops, unexpected error", "error_coe": ERROR_UNEXPECTED}
-error_response_login_required = {"status": 'failed', "desc": "login required", "error_code": ERROR_LOGIN_REQUIRED}
+error_response_login_required = {"status": 'failed', "desc": "login required or you haven't activate your account",
+                                 "error_code": ERROR_LOGIN_REQUIRED}
 
 
 # Data format validator
@@ -56,9 +58,9 @@ def json_response(func):
 def ensure_user_status(func):
     def wrap(request, *args, **kwargs):
         if request.user.is_authenticated():
-            return func(request, *args, **kwargs)
-        else:
-            return JsonResponse(error_response_login_required, status=401)
+            if request.user.state == USER_ACTIVE:
+                return func(request, *args, **kwargs)
+        return JsonResponse(error_response_login_required, status=401)
 
     wrap.__doc__ = func.__doc__
     wrap.__name__ = func.__name__
