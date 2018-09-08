@@ -1,6 +1,6 @@
 # Events Related API documentation
 
-#### Create a nen event for the authenticated User.
+#### Create a new event for the authenticated User.
 
 **URL** : `/api/v1/event/create_event/`
 
@@ -245,5 +245,132 @@ Specified operation type is invalid.
 redundant(eg. participating an event that you have already participated).
 
 
+## Search and filter events with pagination.
+Search and filter events.
+
+**URL** : `api/v1/event/list/`
+
+**Method** : `GET`
+
+**Auth required** : No
+
+**Permissions required** : None
+
+**Data constraints**
+
+[jsonschema](https://json-schema.org/understanding-json-schema/index.html) is used for GET parameter validation.
+
+```json
+{
+    "type": "object",
+    "properties": {
+        "date_begin": {
+            "type": "string",
+            "minLength": 16,
+            "maxLength": 16
+        },
+
+        "date_end": {
+            "type": "string",
+            "minLength": 16,
+            "maxLength": 16
+        },
+
+        "event_type": {
+            "type": "string"
+        },
+
+        "page_limit": {
+            "type": "string"
+        },
+
+        "page_num": {
+            "type": "string"
+        },
+
+        "sort_by": {
+          "type": "string",
+          "enum": ["event_start_date", "event_end_date", "max_quota", "num_participants"]
+        },
+
+        "is_reverse_sort": {
+            "type": "boolean"
+        },
+
+        "keywords": {
+            "type": "string"
+        }
+
+    },
+
+    "required": ["page_limit", "page_num"]
+}
+```
+
+### Success Response
+
+**Code** : `200 OK`
+
+**Request format examples**
+
+`/api/v1/event/list/?page_limit=10&page_num=1&date_begin=2018-09-06 13:00&event_type=1`
+
+**Response format examples**
+
+```json
+{
+    "status": "success", 
+    "total_pages": 13,
+    "events": [ 
+        { 
+            "pk": "b2ad41c2-6a04-4082-be77-496665f6ae77", 
+            "fields": {   
+                  "event_title": "BBQ buffet Dinner @ one north", 
+                  "event_desc": "This is a free dinner", 
+                  "event_creator": 1, 
+                  "event_type": 1, 
+                  "create_time": "2018-09-08T06:22:41.486Z", 
+                  "update_time": "2018-09-08T06:29:14.502Z", 
+                  "state": 1, 
+                  "max_quota": 50, 
+                  "num_participants": 1, 
+                  "extra_info_dict": "", 
+                  "event_start_date": 
+                  "2019-02-07T03:52:00Z", 
+                  "event_end_date": 
+                  "2019-02-07T03:52:00Z", 
+                  "is_open_ended": 1}
+        },
+         
+        { 
+            "pk": "b2ad41c2-6a04-4082-be77-496665f6ae77", 
+            "fields": {   
+                  "event_title": "BBQ buffet Dinner @ one north", 
+                  "event_desc": "This is a free dinner", 
+                  "event_creator": 1, 
+                  "event_type": 1, 
+                  "create_time": "2018-09-08T06:22:41.486Z", 
+                  "update_time": "2018-09-08T06:29:14.502Z", 
+                  "state": 1, 
+                  "max_quota": 50, 
+                  "num_participants": 1, 
+                  "extra_info_dict": "", 
+                  "event_start_date": 
+                  "2019-02-07T03:52:00Z", 
+                  "event_end_date": 
+                  "2019-02-07T03:52:00Z", 
+                  "is_open_ended": 1
+            }
+        }
+    ]
+}
+```
+
+## Notes
+
+* `page_limit` and `page_num` must be specified. Based on the that, one page of events is contained in the response body.
+* `keywords` could be specified only if you want to search certain keywords.
+*  You could only specify `date_begin` such that all events begins after that will be fetched.
+ While only specify `date_end` is not supported for now. 
 
 
