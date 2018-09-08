@@ -5,12 +5,13 @@ from django.core import serializers
 from django.db import transaction
 from django.utils.timezone import make_aware
 
-from apis.constants.error_code import ERROR_EVENT_NON_EXIST, ERROR_PARTICIPATE_NON_EXIST
+from apis.constants.error_code import ERROR_EVENT_NON_EXIST, ERROR_PARTICIPATE_NON_EXIST, ERROR_DATE_INVALID, \
+    ERROR_UNKNOWN_EVENT_TYPE, ERROR_EVENT_UNAVAILABLE, ERROR_PAGE_EXCEEDED
 from apis.constants.util_constants import EVENT_TYPE_OPTIONS, STATUS_QUOTA_FULL, STATUS_ENDED, PARTICIPATE, \
     UNPARTICIPATE, \
     STATUS_CLOSED, STATUS_OPEN, SORT_KEYWORD
 from apis.models import User, EventTab, ParticipateTab, ViewHistoryTab
-from apis.utils import get_response_dict
+from apis.utils import get_error_response_dict
 
 tz = pytz.timezone('Asia/Singapore')
 
@@ -28,29 +29,30 @@ def create_new_event(event_data, user):
     is_open_ended = event_data.get('is_open_ended', '')
     event_start_date_str = event_data.get('event_start_date', '')
     if not event_start_date_str:
-        return False, get_response_dict("incorrect format for event start date")
+        return False, get_error_response_dict("incorrect format of event start date", error_code=ERROR_DATE_INVALID)
     try:
         event_start_time = datetime.strptime(event_start_date_str, '%Y-%m-%d %H:%M')
         event_start_time = make_aware(event_start_time, timezone=tz)
     except:
-        return False, get_response_dict("invalid date format")
+        return False, get_error_response_dict("invalid date format", error_code=ERROR_DATE_INVALID)
 
     event_end_date_str = event_data.get('event_end_date', '')
     if not event_end_date_str and is_open_ended:
         # if open ended, make event end time equals event start time
         event_end_time = event_start_time
     elif not event_end_date_str and not is_open_ended:
-        return False, get_response_dict("non-open-ended event must specify event end time")
+        return False, get_error_response_dict("non-open-ended event must specify event end time",
+                                              error_code=ERROR_DATE_INVALID)
     else:
         try:
             event_end_time = datetime.strptime(event_end_date_str, '%Y-%m-%d %H:%M')
             event_end_time = make_aware(event_end_time, timezone=tz)
         except:
-            return False, get_response_dict("invalid date format")
+            return False, get_error_response_dict("invalid date format", error_code=ERROR_DATE_INVALID)
 
     now = datetime.now(event_start_time.tzinfo)
     if event_start_time < now or event_end_time < now:
-        return False, get_response_dict("invalid event start/end time")
+        return False, get_error_response_dict("invalid event start/end time", error_code=ERROR_DATE_INVALID)
 
     event_data['event_start_date'] = event_start_time
     event_data['event_end_date'] = event_end_time
@@ -71,18 +73,19 @@ def get_filtered_events(filter_options):
         try:
             filter_start_time = datetime.strptime(date_begin, '%Y-%m-%d %H:%M')
         except:
-            return False, get_response_dict("invalid date format")
+            return False, get_error_response_dict("invalid date format", error_code=ERROR_DATE_INVALID)
         events = events.filter(event_start_date__gte=filter_start_time)
 
     elif not date_begin and date_end:
-        return False, get_response_dict("unsupported filter option, please specify event start time")
+        return False, get_error_response_dict("unsupported filter option, please specify event start time",
+                                              error_code=ERROR_DATE_INVALID)
 
     elif date_begin and date_end:
         try:
             filter_start_time = datetime.strptime(date_begin, '%Y-%m-%d %H:%M')
             filter_end_time = datetime.strptime(date_end, '%Y-%m-%d %H:%M')
         except:
-            return False, get_response_dict("invalid date format")
+            return False, get_error_response_dict("invalid date format", error_code=ERROR_DATE_INVALID)
         events = events.filter(event_start_date__gte=filter_start_time).filter(
             event_end_date__lte=filter_end_time)
 
@@ -90,7 +93,7 @@ def get_filtered_events(filter_options):
     event_type = filter_options.get('event_type', None)
     if event_type:
         if int(event_type) not in EVENT_TYPE_OPTIONS:
-            return False, get_response_dict("unknown event type")
+            return False, get_error_response_dict("unknown event type", error_code=ERROR_UNKNOWN_EVENT_TYPE)
         events = events.filter(event_type=event_type)
 
     # keyword matching
@@ -114,7 +117,7 @@ def get_filtered_events(filter_options):
 
         total_pages = -(-events.count() // 20)
         if total_pages < page_num:
-            return False, get_response_dict("max pages exceeded")
+            return False, get_error_response_dict("max pages exceeded", error_code=ERROR_PAGE_EXCEEDED)
         else:
             page_index_begin = page_limit * (page_num - 1)
             page_index_end = min(page_limit * page_num, events.count())
@@ -146,7 +149,7 @@ def build_participate(user, eid, op_type):
                         participate.save()
                     return True, participate
                 else:
-                    return False, get_response_dict("event quota full")
+                    return False, get_error_response_dict("event quota full", error_code=ERROR_EVENT_UNAVAILABLE)
             else:
                 # already has participate record of status open, don't care.
                 return True, participate
@@ -162,15 +165,15 @@ def build_participate(user, eid, op_type):
                 participate.save()
                 return True, participate
             elif not participate:
-                return False, get_response_dict("You did not participate in this event",
-                                                error_code=ERROR_PARTICIPATE_NON_EXIST)
+                return False, get_error_response_dict("You did not participate in this event",
+                                                      error_code=ERROR_PARTICIPATE_NON_EXIST)
             else:
                 # already has participate record of status closed, don't care.
                 return True, participate
         else:
-            return False, get_response_dict("unknown op type")
+            return False, get_error_response_dict("unknown op type")
     else:
-        return False, get_response_dict("event does not exist", error_code=ERROR_EVENT_NON_EXIST)
+        return False, get_error_response_dict("event does not exist", error_code=ERROR_EVENT_NON_EXIST)
 
 
 @transaction.atomic

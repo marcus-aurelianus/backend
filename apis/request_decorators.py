@@ -38,12 +38,14 @@ def validate_data(data_schema):
 
 def json_response(func):
     def wrap(request, *args, **kwargs):
+        status_code = 200
         try:
             response_data = func(request, *args, **kwargs)
-        except Exception as e:
-            print(e)
+        except:
             return JsonResponse(error_response_unexpected_error)
-        return JsonResponse(response_data)
+        if response_data.get('status') == 'failed':
+            status_code = 400
+        return JsonResponse(response_data, status=status_code)
 
     wrap.__doc__ = func.__doc__
     wrap.__name__ = func.__name__
@@ -55,7 +57,7 @@ def ensure_user_status(func):
         if request.user.is_authenticated():
             return func(request, *args, **kwargs)
         else:
-            return JsonResponse(error_response_login_required)
+            return JsonResponse(error_response_login_required, status=401)
 
     wrap.__doc__ = func.__doc__
     wrap.__name__ = func.__name__

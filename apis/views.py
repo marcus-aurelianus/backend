@@ -38,8 +38,9 @@ def user_login(request):
 @ensure_user_status
 @json_response
 def user_logout(request):
+    uid = request.user.pk
     logout(request)
-    return {"status": 'success'}
+    return {"status": 'success', "uid": uid}
 
 
 @csrf_exempt

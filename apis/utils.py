@@ -1,4 +1,4 @@
-def get_response_dict(desc, status=None, error_code=None):
+def get_error_response_dict(desc, status=None, error_code=None):
     response_dict = {
         "desc": desc
     }
